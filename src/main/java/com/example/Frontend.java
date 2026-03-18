@@ -5,6 +5,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
@@ -99,6 +101,7 @@ public class Frontend {
             JTable table = new JTable(model);
             Font font = new Font("Arial", Font.PLAIN, 15);
             table.setFont(font);
+            ((DefaultTableCellRenderer) table.getTableHeader().getDefaultRenderer()).setHorizontalAlignment(JLabel.LEFT);
             table.setRowHeight(16);
             table.getTableHeader().setFont(font);
             JScrollPane scrl = new JScrollPane(table);
@@ -110,11 +113,13 @@ public class Frontend {
             LogTableModel logmodel = new LogTableModel(logs);
             JTable logtable = new JTable(logmodel);
             logtable.setFont(font);
+            ((DefaultTableCellRenderer) logtable.getTableHeader().getDefaultRenderer()).setHorizontalAlignment(JLabel.LEFT);
             logtable.setRowHeight(16);
             logtable.getTableHeader().setFont(font);
             JScrollPane scrllog = new JScrollPane(logtable);
             tabpane.add("Logs", scrllog);
             logtable.setRowHeight(20);
+            tabpane.setTabPlacement(JTabbedPane.LEFT);
 
             if (manager || owner){
                 table.addKeyListener(new KeyAdapter() {

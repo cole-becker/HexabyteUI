@@ -1,7 +1,6 @@
 package com.example;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 class InventorySystem {
@@ -16,7 +15,7 @@ class InventorySystem {
         conn = DriverManager.getConnection(
                 "jdbc:mysql://127.0.0.1:3306/login?useSSL=false&allowPublicKeyRetrieval=true",
                 "root",
-                "raposisnice"
+                "abc"
         );
     }
 
