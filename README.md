@@ -30,7 +30,7 @@ CREATE TABLE log (
 );
 ```
 ```
-CREATE TABLE login.users (
+CREATE TABLE users (
     username VARCHAR(255) NULL,
     password VARCHAR(255) NULL,
     role VARCHAR(255) NULL
