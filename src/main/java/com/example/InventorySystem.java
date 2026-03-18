@@ -115,6 +115,23 @@ class InventorySystem {
         }
     }
 
+    public String login(String username, String password,boolean employ, boolean manage, boolean owner) {
+        try {
+            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM users");
+            while (rs.next()) {
+                if (rs.getString("username").equals(username)){
+                    if (rs.getString("password").equals(password)){
+                        return rs.getString("role");
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private void logToDB(String entries) {
         try {
             PreparedStatement ps = conn.prepareStatement(

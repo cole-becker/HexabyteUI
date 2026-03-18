@@ -26,6 +26,7 @@ public class Frontend {
         boolean owner = false;
         boolean manager = false;
         boolean employee = false;
+        InventorySystem system = new InventorySystem();
 
         try {
             UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatDarkLaf());
@@ -64,27 +65,21 @@ public class Frontend {
             char[] passChar = passwordLogin.getPassword();
             String password = new String(passChar);
 
-            if (username.equalsIgnoreCase("owner")){
-                if (password.equals("Owner")){
+            String role = system.login(username, password, employee, manager, owner);
+            if (role != null){
+                if (role.toLowerCase().equals("owner")){
                     owner = true;
                 }
-            }
-            if (username.equalsIgnoreCase("manager")){
-                if (password.equals("Manager")){
+                if (role.toLowerCase().equals("manager")){
                     manager = true;
                 }
-            }
-            if (username.equalsIgnoreCase("employee")){
-                if (password.equals("Employee")){
+                if (role.toLowerCase().equals("employee")){
                     employee = true;
                 }
-            }
-            
+            } 
         }
 
         if (employee || owner || manager){
-            InventorySystem system = new InventorySystem();
-
             JFrame frame = new JFrame("Hexabyte Inventory Manager");
             frame.setLayout(new BorderLayout());
             frame.setSize(1920,1080);
