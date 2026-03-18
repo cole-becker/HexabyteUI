@@ -115,7 +115,7 @@ class InventorySystem {
         }
     }
 
-    public String login(String username, String password,boolean employ, boolean manage, boolean owner) {
+    public String login(String username, String password) {
         try {
             ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM users");
             while (rs.next()) {

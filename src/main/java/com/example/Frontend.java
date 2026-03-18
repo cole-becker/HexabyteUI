@@ -51,21 +51,28 @@ public class Frontend {
         loginpane.add(userpane);
         loginpane.add(passpane);
 
+        // While wrong login allow constant attempts instead of closing
+        String role = null;
+        while (role == null){
+            int result = JOptionPane.showConfirmDialog(
+                null,
+                loginpane,
+                "login",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+            );
+            if (result == JOptionPane.CANCEL_OPTION) return;
+            if (result == JOptionPane.OK_OPTION){
+                String username = userLogin.getText();
+                char[] passChar = passwordLogin.getPassword();
+                String password = new String(passChar);
 
-        int result = JOptionPane.showConfirmDialog(
-            null,
-            loginpane,
-            "login",
-            JOptionPane.OK_CANCEL_OPTION,
-            JOptionPane.PLAIN_MESSAGE
-        );
-        if (result == JOptionPane.CANCEL_OPTION) return;
-        if (result == JOptionPane.OK_OPTION){
-            String username = userLogin.getText();
-            char[] passChar = passwordLogin.getPassword();
-            String password = new String(passChar);
-
-            String role = system.login(username, password, employee, manager, owner);
+                role = system.login(username, password);
+                
+                if (role == null){
+                    passwordLogin.setText("");
+                }
+        }
             if (role != null){
                 if (role.toLowerCase().equals("owner")){
                     owner = true;
