@@ -3,7 +3,7 @@ A terminal-based inventory management system built with Java and MySQL for CSCI2
 
 ## Features
 
-- Role-based access control (Owner & Manager)
+- Role-based access control (Owner & Manager & Employee)
 - Add, remove, and update inventory items
 - Persistent storage via MySQL database
 - Activity log with timestamps
@@ -27,6 +27,13 @@ CREATE TABLE log (
     entries VARCHAR(255) NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (idlog)
+);
+```
+```
+CREATE TABLE login.users (
+    username VARCHAR(255) NULL,
+    password VARCHAR(255) NULL,
+    role VARCHAR(255) NULL
 );
 ```
 
