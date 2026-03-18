@@ -4,6 +4,7 @@ A terminal-based inventory management system built with Java and MySQL for CSCI2
 ## Features
 
 - Role-based access control (Owner & Manager & Employee)
+- Login screen with user database
 - Add, remove, and update inventory items
 - Persistent storage via MySQL database
 - Activity log with timestamps
