@@ -26,8 +26,18 @@ public class Frontend {
         boolean owner = false;
         boolean manager = false;
         boolean employee = false;
+        boolean firststart = false;
+        String role = null;
+
         try {
             InventorySystem system = new InventorySystem();
+            
+            if (system.isTableEmpty("users")){
+                firststart = true;
+            }
+
+            // Create SQL Tables for the user if not already there
+            system.initializeDatabases();
 
             try {
                 UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatDarkLaf());
@@ -52,8 +62,28 @@ public class Frontend {
             loginpane.add(userpane);
             loginpane.add(passpane);
 
-            // While wrong login allow constant attempts instead of closing
-            String role = null;
+            // If no users detected in databse create owner login
+            if (firststart) {
+                int result = JOptionPane.showConfirmDialog(
+                    null,
+                    loginpane,
+                    "create login for owner",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+                );
+                if (result == JOptionPane.CANCEL_OPTION) return;
+                if (result == JOptionPane.OK_OPTION){
+                    String username = userLogin.getText();
+                    char[] passChar = passwordLogin.getPassword();
+                    String password = new String(passChar);
+
+                    system.addUser(username, password, "Owner");
+                    role = "Owner";
+                    owner = true;
+                }
+            }
+            
+            // Loop through login attempts 
             while (role == null){
                 int result = JOptionPane.showConfirmDialog(
                     null,
@@ -86,9 +116,12 @@ public class Frontend {
                     }
                 } 
             }
+            final boolean isOwner = owner;
+            final boolean isManager = manager;
 
+            // If valid login role then open UI
             if (employee || owner || manager){
-                JFrame frame = new JFrame("Hexabyte Inventory Manager");
+                JFrame frame = new JFrame("Hexabyte Inventory Manager - " + role);
                 frame.setLayout(new BorderLayout());
                 frame.setSize(1920,1080);
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -98,6 +131,7 @@ public class Frontend {
             
                 Scanner myInput = new Scanner(System.in);
                 
+                // Create tablemodel for Products and set the tab
                 List<Product> Data = new ArrayList<>();
                 system.loadInventory(Data);
                 ProductTableModel model = new ProductTableModel(Data);
@@ -111,6 +145,7 @@ public class Frontend {
                 tabpane.add("Stock", scrl);
                 table.setRowHeight(20);
 
+                // Create tablemodel for logs and set the tab
                 List<Log> logs = new ArrayList<>();
                 system.loadLog(logs);
                 LogTableModel logmodel = new LogTableModel(logs);
@@ -125,6 +160,7 @@ public class Frontend {
                 tabpane.setTabPlacement(JTabbedPane.LEFT);
 
                 if (manager || owner){
+                    // KeyBind shortcuts for manager and owner for removing and changing quantity and prices
                     table.addKeyListener(new KeyAdapter() {
                         public void keyPressed(KeyEvent e) {
                             if (e.getKeyChar() == '=') {
@@ -181,6 +217,7 @@ public class Frontend {
                     });
                 }
 
+                // KeyBind shortcuts changing quantity
                 table.addKeyListener(new KeyAdapter() {
                     public void keyPressed(KeyEvent e) {
                         if (e.getKeyChar() == '-') {
@@ -224,6 +261,7 @@ public class Frontend {
                     }
                 });
 
+                // Create and add buttons to JPanel
                 JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
                 JButton addButt = new JButton("Add");
                 top.add(addButt);
@@ -234,12 +272,115 @@ public class Frontend {
                 JButton quantityButt = new JButton("Change Quantity");
                 top.add(quantityButt);
 
+                // JMenubar for adding and removing users from database
+                JMenuBar menubar = new JMenuBar();
+                JMenu menu = new JMenu("User");
+                JMenuItem addUser = new JMenuItem("Add New User");
+                JMenuItem removeUser = new JMenuItem("Remove User");
+                menu.add(addUser);
+                menu.add(removeUser);
+                menubar.add(menu);
+
+                frame.setJMenuBar(menubar);
+
+                // Pop up to add new user to database, Managers can only add employees
+                addUser.addActionListener(e -> {
+                    JPanel addUserPane = new JPanel();
+                    addUserPane.setLayout(new BoxLayout(addUserPane, BoxLayout.Y_AXIS));
+
+                    JPanel usernamePane = new JPanel();
+                    usernamePane.add(new JLabel("Username: "));
+                    JTextField usernameInput = new JTextField(15);
+                    usernamePane.add(usernameInput);
+
+                    JPanel passwordPane = new JPanel();
+                    passwordPane.add(new JLabel("Password: "));
+                    JPasswordField passwordInput = new JPasswordField(15);
+                    passwordPane.add(passwordInput);
+
+                    JPanel rolePane = new JPanel();
+                    rolePane.add(new JLabel("Role: "));
+                    JTextField roleInput = new JTextField(15);
+                    rolePane.add(roleInput);
+
+                    addUserPane.add(usernamePane);
+                    addUserPane.add(passwordPane);
+                    addUserPane.add(rolePane);
+
+                    int result = JOptionPane.showConfirmDialog(
+                    null,
+                    addUserPane,
+                    "create new user",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+                    );
+
+                    if (result == JOptionPane.CANCEL_OPTION) {return;}
+                    
+                    if (result == JOptionPane.OK_OPTION){
+                        char[] passChar = passwordInput.getPassword();
+                        String addPass = new String(passChar);
+                        if (isOwner){
+                            if (roleInput.getText().toLowerCase().equals("manager") || roleInput.getText().toLowerCase().equals("employee")){
+                                system.addUser(usernameInput.getText(), addPass, roleInput.getText());
+                                JOptionPane.showMessageDialog(null, "Successfully created user: " + usernameInput.getText());
+                            } else {
+                                JOptionPane.showMessageDialog(null, "Invalid User");
+                            }
+                        }
+                        if (isManager){
+                            if (roleInput.getText().equals("employee")){
+                                system.addUser(usernameInput.getText(), addPass, roleInput.getText());
+                                JOptionPane.showMessageDialog(null, "Successfully created user: " + usernameInput.getText());
+                            } 
+                            if (roleInput.getText().toLowerCase().equals("manger") || roleInput.getText().toLowerCase().equals("owner")) {
+                                JOptionPane.showMessageDialog(null, "Insuffiecient Perimissions");
+                            } else {
+                                JOptionPane.showMessageDialog(null, "Invalid User");
+                            }
+                        }
+                    }   
+                });
+
+                // Pop up to remove users from database with role awareness
+                removeUser.addActionListener(e -> {
+                    JPanel removePane = new JPanel();
+                    removePane.add(new JLabel("Username: "));
+                    JTextField userRemove = new JTextField(15);
+                    
+                    int result = JOptionPane.showConfirmDialog(
+                    null,
+                    removePane,
+                    "create new user",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+                    );
+
+                    if (result == JOptionPane.CANCEL_OPTION){return;}
+                    if (result == JOptionPane.OK_OPTION){
+                        // Manager cannot delete owner
+                        if (isManager) {
+                            if (!system.getRole(userRemove.getText()).toLowerCase().equals("owner")){
+                                system.removeUser(userRemove.getText());
+                                JOptionPane.showMessageDialog(null, "User successfully deleted");
+                            }
+                        // Owner can delete anyone (even himself to reset login)
+                        } else {
+                            system.removeUser(userRemove.getText());
+                            JOptionPane.showMessageDialog(null, "User successfully deleted");
+                        }
+                    }
+                });
+
+                // Space the top bar buttons
                 top.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
                 top.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
 
+                // Create right pane for looks
                 JPanel rightpane = new JPanel();
                 frame.add(rightpane, BorderLayout.LINE_START);
 
+                // Pop up for adding a new Product to the system
                 addButt.addActionListener(e -> {
                     JPanel addPane = new JPanel();
                     addPane.setLayout(new BoxLayout(addPane, BoxLayout.Y_AXIS));
@@ -300,6 +441,7 @@ public class Frontend {
                     }
                 });
 
+                // Remove an Product from the system after selecting it in the Table
                 removeButt.addActionListener(e -> {
                     try {
                         int result1 = JOptionPane.showConfirmDialog(
@@ -320,6 +462,7 @@ public class Frontend {
                     }
                 });
 
+                // Pop up to change price of selected product in table
                 priceButt.addActionListener(e -> {
                     try {
                         String newPrice = JOptionPane.showInputDialog(
@@ -343,6 +486,7 @@ public class Frontend {
                     }
                 });
 
+                // Pop up to change quantity of selected product in table
                 quantityButt.addActionListener(e -> {
                     try {
                         String newQuant = JOptionPane.showInputDialog(
@@ -368,11 +512,13 @@ public class Frontend {
                     }
                 });
 
+                // Disable buttons and menu so that employees don't have permissions
                 if (!(owner || manager)){
                     priceButt.setVisible(false);
                     removeButt.setVisible(false);
                     addButt.setVisible(false);
                     tabpane.remove(1);
+                    menu.setVisible(false);
                 }
 
                 frame.add(top, BorderLayout.PAGE_START);

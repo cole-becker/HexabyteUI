@@ -62,6 +62,7 @@ class InventorySystem {
         }
     }
 
+    // Update price of Product in database
     public void updatePrice(String name, double newPrice) {
         try {
             double oldPrice = 0.0;
@@ -90,6 +91,7 @@ class InventorySystem {
         }
     }
 
+    // Update the quantity of product in database
     public void updateQuantity(String name, int newQuantity) {
 
         try {
@@ -119,6 +121,7 @@ class InventorySystem {
         }
     }
 
+    // load all inventory into data list of products
     public void loadInventory(List<Product> Data) {
         Data.clear();
         try {
@@ -137,6 +140,7 @@ class InventorySystem {
         }
     }
 
+    // If login match return role
     public String login(String username, String password) {
         try {
             ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM users");
@@ -154,6 +158,7 @@ class InventorySystem {
         return null;
     }
 
+    // Insert log into database
     private void logToDB(String entries) {
         try {
             PreparedStatement ps = conn.prepareStatement(
@@ -166,6 +171,7 @@ class InventorySystem {
         }
     }
 
+    // Retrieve log and add it to list of logs 
     public void loadLog(List<Log> logs) {
         logs.clear();
         try {
@@ -178,5 +184,116 @@ class InventorySystem {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean isTableEmpty(String tableName) {
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM " + tableName + " LIMIT 1");
+
+            if (rs.next()) {
+                return rs.getInt(1) == 0;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    // Create all necessary tables
+    public void initializeDatabases(){
+        try {
+            Statement createstatement = conn.createStatement();
+
+            // Create inventory table
+            createstatement.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS inventory (
+                    idinventory INT NOT NULL,
+                    name VARCHAR(255) NOT NULL,
+                    price DOUBLE NOT NULL,
+                    quantity INT NOT NULL,
+                    origin VARCHAR(255) NOT NULL
+                )                
+            """);
+
+            // Create log table
+            createstatement.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS log (
+                    idlog INT NOT NULL AUTO_INCREMENT,
+                    entries VARCHAR(255) NOT NULL,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (idlog)
+                )                
+            """);
+
+            // Create users table
+            createstatement.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS users (
+                    username VARCHAR(255) PRIMARY KEY,
+                    password VARCHAR(255) NOT NULL,
+                    role VARCHAR(255) NOT NULL
+                )                
+            """);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Add user to database
+    public void addUser(String username, String password, String role) {
+
+        logToDB("Login created for " + username + " (" + role + ")");
+
+        try {
+            PreparedStatement preparedStatement = conn.prepareStatement(
+                    "INSERT INTO users (username, password, role) Values (?, ?, ?)"
+            );
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, password);
+            preparedStatement.setString(3, role);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Remove user from database
+    public void removeUser(String username) {
+
+        logToDB("Removed user " + username);
+
+        try {
+            PreparedStatement preparedStatement = conn.prepareStatement(
+                    "DELETE FROM users WHERE username = ?"
+            );
+            preparedStatement.setString(1, username);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Get role of username
+    public String getRole(String username) {
+        String role = null;
+        try {
+            PreparedStatement ps = conn.prepareStatement(
+                "SELECT role FROM users WHERE username = ?"
+            );
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                role = rs.getString("role");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return role;
     }
 }
