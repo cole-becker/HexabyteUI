@@ -63,13 +63,23 @@ class InventorySystem {
     }
 
     public void updatePrice(String name, double newPrice) {
-
-        logToDB("Updated price for: " + name);
-
         try {
+            double oldPrice = 0.0;
+
+            PreparedStatement selectStatement = conn.prepareStatement(
+                    "SELECT price FROM inventory WHERE name = ?"
+            );
+            selectStatement.setString(1, name);
+
+            ResultSet rs = selectStatement.executeQuery();
+            if (rs.next()){
+                oldPrice = rs.getDouble("price");
+            }
+
             PreparedStatement preparedStatement = conn.prepareStatement(
                     "UPDATE inventory SET price = ? WHERE name = ?"
             );
+            logToDB("Updated price for: " + name + " from " + oldPrice + " to " + newPrice);
             preparedStatement.setDouble(1, newPrice);
             preparedStatement.setString(2, name);
             preparedStatement.executeUpdate();
@@ -82,15 +92,27 @@ class InventorySystem {
 
     public void updateQuantity(String name, int newQuantity) {
 
-        logToDB("Updated quantity for: " + name);
-
         try {
+            int oldQuantity = 0;
+
+            PreparedStatement selectStatement = conn.prepareStatement(
+                    "SELECT quantity FROM inventory WHERE name = ?"
+            );
+            selectStatement.setString(1, name);
+
+            ResultSet rs = selectStatement.executeQuery();
+            if (rs.next()){
+                oldQuantity = rs.getInt("quantity");
+            }
+
             PreparedStatement ps = conn.prepareStatement(
                     "UPDATE inventory SET quantity = ? WHERE name = ?"
             );
             ps.setInt(1, newQuantity);
             ps.setString(2, name);
             ps.executeUpdate();
+
+            logToDB("Updated quantity for: " + name + " from " + oldQuantity + " to " + newQuantity);
 
         } catch (SQLException e) {
             e.printStackTrace();
