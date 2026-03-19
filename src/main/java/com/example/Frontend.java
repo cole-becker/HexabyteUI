@@ -6,7 +6,6 @@ import java.awt.Color;
 import java.awt.Font;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
-
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
@@ -300,7 +299,8 @@ public class Frontend {
 
                     JPanel rolePane = new JPanel();
                     rolePane.add(new JLabel("Role: "));
-                    JTextField roleInput = new JTextField(15);
+                    String [] roles = new String[] {"Employee", "Manager"};
+                    JComboBox roleInput = new JComboBox(roles);
                     rolePane.add(roleInput);
 
                     addUserPane.add(usernamePane);
@@ -321,22 +321,22 @@ public class Frontend {
                         char[] passChar = passwordInput.getPassword();
                         String addPass = new String(passChar);
                         if (isOwner){
-                            if (roleInput.getText().toLowerCase().equals("manager") || roleInput.getText().toLowerCase().equals("employee")){
-                                system.addUser(usernameInput.getText(), addPass, roleInput.getText());
+                            if (!addPass.isEmpty() && !usernameInput.getText().isEmpty()){
+                                system.addUser(usernameInput.getText(), addPass, roleInput.getSelectedItem().toString());
                                 JOptionPane.showMessageDialog(null, "Successfully created user: " + usernameInput.getText());
                             } else {
                                 JOptionPane.showMessageDialog(null, "Invalid User");
                             }
                         }
                         if (isManager){
-                            if (roleInput.getText().equals("employee")){
-                                system.addUser(usernameInput.getText(), addPass, roleInput.getText());
-                                JOptionPane.showMessageDialog(null, "Successfully created user: " + usernameInput.getText());
+                            if (roleInput.getSelectedItem().toString().toLowerCase().equals("employee")){
+                                if (!addPass.isEmpty() && !usernameInput.getText().isEmpty()){
+                                    system.addUser(usernameInput.getText(), addPass, roleInput.getSelectedItem().toString());
+                                    JOptionPane.showMessageDialog(null, "Successfully created user: " + usernameInput.getText());
+                                }
                             } 
-                            if (roleInput.getText().toLowerCase().equals("manger") || roleInput.getText().toLowerCase().equals("owner")) {
+                            if (roleInput.getSelectedItem().toString().toLowerCase().equals("manger")) {
                                 JOptionPane.showMessageDialog(null, "Insuffiecient Perimissions");
-                            } else {
-                                JOptionPane.showMessageDialog(null, "Invalid User");
                             }
                         }
                     }   
