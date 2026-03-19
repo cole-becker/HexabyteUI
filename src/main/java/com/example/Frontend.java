@@ -347,11 +347,12 @@ public class Frontend {
                     JPanel removePane = new JPanel();
                     removePane.add(new JLabel("Username: "));
                     JTextField userRemove = new JTextField(15);
+                    removePane.add(userRemove);
                     
                     int result = JOptionPane.showConfirmDialog(
                     null,
                     removePane,
-                    "create new user",
+                    "Remove user",
                     JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE
                     );
