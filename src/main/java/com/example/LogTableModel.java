@@ -6,7 +6,7 @@ import java.util.List;
 public class LogTableModel extends AbstractTableModel {
 
     private List<Log> logs;
-    private String[] columns = {"Idlog", "Entries", "Timestamp"};
+    private String[] columns = {"Idlog", "User", "Entries", "Timestamp"};
 
     public LogTableModel(List<Log> logs) {
         this.logs = logs;
@@ -33,8 +33,9 @@ public class LogTableModel extends AbstractTableModel {
 
         switch (columnIndex) {
             case 0: return l.getIdlog();
-            case 1: return l.getEntries();
-            case 2: return l.getTimestamp();
+            case 1: return l.getUser();
+            case 2: return l.getEntries();
+            case 3: return l.getTimestamp();
             default: return null;
         }
     }

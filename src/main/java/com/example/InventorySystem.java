@@ -25,19 +25,18 @@ class InventorySystem {
     }
 
     // method to add item to database
-    public void addItem(int id, String name, double price, int quantity, String origin) {
+    public void addItem(String name, double price, int quantity, String origin, String user) {
 
-        logToDB("Added item: " + name);
+        logToDB(user, "Added item: " + name);
 
         try {
             PreparedStatement preparedStatement = conn.prepareStatement(
-                    "INSERT INTO Inventory (idinventory, name, price, quantity, origin) Values (?, ?, ?, ?, ?)"
+                    "INSERT INTO Inventory (name, price, quantity, origin) Values (?, ?, ?, ?)"
             );
-            preparedStatement.setInt(1, id);
-            preparedStatement.setString(2, name);
-            preparedStatement.setDouble(3, price);
-            preparedStatement.setInt(4, quantity);
-            preparedStatement.setString(5, origin);
+            preparedStatement.setString(1, name);
+            preparedStatement.setDouble(2, price);
+            preparedStatement.setInt(3, quantity);
+            preparedStatement.setString(4, origin);
 
             int rowsAffected = preparedStatement.executeUpdate();
 
@@ -47,9 +46,9 @@ class InventorySystem {
     }
 
     // method to remove an item from database
-    public void removeItem(String name) {
+    public void removeItem(String name, String user) {
 
-        logToDB("Removed item: " + name);
+        logToDB(user, "Removed item: " + name);
 
         try {
             PreparedStatement preparedStatement = conn.prepareStatement(
@@ -57,13 +56,14 @@ class InventorySystem {
             );
             preparedStatement.setString(1, name);
             preparedStatement.executeUpdate();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     // Update price of Product in database
-    public void updatePrice(String name, double newPrice) {
+    public void updatePrice(String name, double newPrice, String user) {
         try {
             double oldPrice = 0.0;
 
@@ -80,7 +80,7 @@ class InventorySystem {
             PreparedStatement preparedStatement = conn.prepareStatement(
                     "UPDATE inventory SET price = ? WHERE name = ?"
             );
-            logToDB("Updated price for: " + name + " from " + oldPrice + " to " + newPrice);
+            logToDB(user, "Updated price for: " + name + " from " + oldPrice + " to " + newPrice);
             preparedStatement.setDouble(1, newPrice);
             preparedStatement.setString(2, name);
             preparedStatement.executeUpdate();
@@ -92,7 +92,7 @@ class InventorySystem {
     }
 
     // Update the quantity of product in database
-    public void updateQuantity(String name, int newQuantity) {
+    public void updateQuantity(String name, int newQuantity, String user) {
 
         try {
             int oldQuantity = 0;
@@ -114,7 +114,7 @@ class InventorySystem {
             ps.setString(2, name);
             ps.executeUpdate();
 
-            logToDB("Updated quantity for: " + name + " from " + oldQuantity + " to " + newQuantity);
+            logToDB(user, "Updated quantity for: " + name + " from " + oldQuantity + " to " + newQuantity);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -127,7 +127,8 @@ class InventorySystem {
         try {
             ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM inventory");
             while (rs.next()) {
-                Data.add(new Product(rs.getInt("idinventory"),
+                Data.add(new Product(
+                        rs.getInt("idinventory"),
                         rs.getString("name"),
                         rs.getDouble("price"),
                         rs.getInt("quantity"),
@@ -159,12 +160,13 @@ class InventorySystem {
     }
 
     // Insert log into database
-    private void logToDB(String entries) {
+    private void logToDB(String user, String entries) {
         try {
             PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO log (entries) VALUES (?)"
+                    "INSERT INTO log (user, entries) VALUES (?, ?)"
             );
-            ps.setString(1, entries);
+            ps.setString(1, user);
+            ps.setString(2, entries);
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -176,10 +178,10 @@ class InventorySystem {
         logs.clear();
         try {
             ResultSet rs = conn.createStatement().executeQuery(
-                    "SELECT idlog, entries, timestamp FROM log ORDER BY idlog DESC"
+                    "SELECT idlog, user, entries, timestamp FROM log ORDER BY idlog DESC"
             );
             while (rs.next()) {
-                logs.add(new Log(rs.getInt("idlog"), rs.getString("entries"), rs.getString("timestamp")));
+                logs.add(new Log(rs.getInt("idlog"), rs.getString("user"), rs.getString("entries"), rs.getString("timestamp")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -196,7 +198,6 @@ class InventorySystem {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
         }
         return true;
     }
@@ -209,11 +210,12 @@ class InventorySystem {
             // Create inventory table
             createstatement.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS inventory (
-                    idinventory INT NOT NULL,
+                    idinventory INT NOT NULL AUTO_INCREMENT,
                     name VARCHAR(255) NOT NULL,
                     price DOUBLE NOT NULL,
                     quantity INT NOT NULL,
-                    origin VARCHAR(255) NOT NULL
+                    origin VARCHAR(255) NOT NULL,
+                    PRIMARY KEY (idinventory)
                 )                
             """);
 
@@ -221,6 +223,7 @@ class InventorySystem {
             createstatement.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS log (
                     idlog INT NOT NULL AUTO_INCREMENT,
+                    user VARCHAR(255) NOT NULL,
                     entries VARCHAR(255) NOT NULL,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                     PRIMARY KEY (idlog)
@@ -237,14 +240,14 @@ class InventorySystem {
             """);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            return;
         }
     }
 
     // Add user to database
-    public void addUser(String username, String password, String role) {
+    public void addUser(String username, String password, String role, String user) {
 
-        logToDB("Login created for " + username + " (" + role + ")");
+        logToDB(user, "Login created for " + username + " (" + role + ")");
 
         try {
             PreparedStatement preparedStatement = conn.prepareStatement(
@@ -262,9 +265,9 @@ class InventorySystem {
     }
 
     // Remove user from database
-    public void removeUser(String username) {
+    public void removeUser(String username, String user, String u) {
 
-        logToDB("Removed user " + username);
+        logToDB(user, "Removed user: " + username);
 
         try {
             PreparedStatement preparedStatement = conn.prepareStatement(
@@ -272,6 +275,8 @@ class InventorySystem {
             );
             preparedStatement.setString(1, username);
             preparedStatement.executeUpdate();
+
+        
         } catch (SQLException e) {
             e.printStackTrace();
         }

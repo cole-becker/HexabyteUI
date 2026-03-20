@@ -76,7 +76,7 @@ public class Frontend {
                     char[] passChar = passwordLogin.getPassword();
                     String password = new String(passChar);
 
-                    system.addUser(username, password, "Owner");
+                    system.addUser(username, password, "Owner", "System");
                     role = "Owner";
                     owner = true;
                 }
@@ -102,7 +102,7 @@ public class Frontend {
                     if (role == null){
                         passwordLogin.setText("");
                     }
-            }
+                }
                 if (role != null){
                     if (role.toLowerCase().equals("owner")){
                         owner = true;
@@ -117,6 +117,7 @@ public class Frontend {
             }
             final boolean isOwner = owner;
             final boolean isManager = manager;
+            final String currentUser = userLogin.getText();
 
             // If valid login role then open UI
             if (employee || owner || manager){
@@ -164,7 +165,7 @@ public class Frontend {
                         public void keyPressed(KeyEvent e) {
                             if (e.getKeyChar() == '=') {
                                 try {
-                                    system.updateQuantity(Data.get(table.getSelectedRow()).getName(), Data.get(table.getSelectedRow()).getQuantity() + 1);
+                                    system.updateQuantity(Data.get(table.getSelectedRow()).getName(), Data.get(table.getSelectedRow()).getQuantity() + 1, currentUser);
                                     system.loadInventory(Data);
                                     system.loadLog(logs);
                                     logmodel.fireTableDataChanged();
@@ -182,7 +183,7 @@ public class Frontend {
                                     JOptionPane.YES_OPTION
                                     );
                                     if (result == JOptionPane.YES_OPTION){
-                                        system.removeItem(Data.get(table.getSelectedRow()).getName());
+                                        system.removeItem(Data.get(table.getSelectedRow()).getName(), currentUser);
                                         system.loadInventory(Data);
                                         system.loadLog(logs);
                                         logmodel.fireTableDataChanged();
@@ -200,7 +201,7 @@ public class Frontend {
                                     );
                                     if (newPrice == null) {return;}
                                     if (Double.parseDouble(newPrice) >= 0.0){
-                                        system.updatePrice(Data.get(table.getSelectedRow()).getName(), Double.parseDouble(newPrice));
+                                        system.updatePrice(Data.get(table.getSelectedRow()).getName(), Double.parseDouble(newPrice), currentUser);
                                         system.loadInventory(Data);
                                         system.loadLog(logs);
                                         logmodel.fireTableDataChanged();
@@ -222,7 +223,7 @@ public class Frontend {
                         if (e.getKeyChar() == '-') {
                             try {
                                 if ((Data.get(table.getSelectedRow()).getQuantity() - 1) >= 0){
-                                    system.updateQuantity(Data.get(table.getSelectedRow()).getName(), Data.get(table.getSelectedRow()).getQuantity() - 1);
+                                    system.updateQuantity(Data.get(table.getSelectedRow()).getName(), Data.get(table.getSelectedRow()).getQuantity() - 1, currentUser);
                                     system.loadInventory(Data);
                                     system.loadLog(logs);
                                     logmodel.fireTableDataChanged();
@@ -243,7 +244,7 @@ public class Frontend {
                                 );
                                 if (newQuant == null) {return;}
                                 if (Integer.parseInt(newQuant) >= 0){
-                                    system.updateQuantity(Data.get(table.getSelectedRow()).getName(), Integer.parseInt(newQuant));
+                                    system.updateQuantity(Data.get(table.getSelectedRow()).getName(), Integer.parseInt(newQuant), currentUser);
                                     system.loadInventory(Data);
                                     system.loadLog(logs);
                                     logmodel.fireTableDataChanged();
@@ -300,7 +301,7 @@ public class Frontend {
                     JPanel rolePane = new JPanel();
                     rolePane.add(new JLabel("Role: "));
                     String [] roles = new String[] {"Employee", "Manager"};
-                    JComboBox roleInput = new JComboBox(roles);
+                    JComboBox<String> roleInput = new JComboBox<>(roles);
                     rolePane.add(roleInput);
 
                     addUserPane.add(usernamePane);
@@ -322,8 +323,10 @@ public class Frontend {
                         String addPass = new String(passChar);
                         if (isOwner){
                             if (!addPass.isEmpty() && !usernameInput.getText().isEmpty()){
-                                system.addUser(usernameInput.getText(), addPass, roleInput.getSelectedItem().toString());
+                                system.addUser(usernameInput.getText(), addPass, roleInput.getSelectedItem().toString(), currentUser);
                                 JOptionPane.showMessageDialog(null, "Successfully created user: " + usernameInput.getText());
+                                system.loadLog(logs);
+                                logmodel.fireTableDataChanged();
                             } else {
                                 JOptionPane.showMessageDialog(null, "Invalid User");
                             }
@@ -331,8 +334,10 @@ public class Frontend {
                         if (isManager){
                             if (roleInput.getSelectedItem().toString().toLowerCase().equals("employee")){
                                 if (!addPass.isEmpty() && !usernameInput.getText().isEmpty()){
-                                    system.addUser(usernameInput.getText(), addPass, roleInput.getSelectedItem().toString());
+                                    system.addUser(usernameInput.getText(), addPass, roleInput.getSelectedItem().toString(), currentUser);
                                     JOptionPane.showMessageDialog(null, "Successfully created user: " + usernameInput.getText());
+                                    system.loadLog(logs);
+                                    logmodel.fireTableDataChanged();
                                 }
                             } 
                             if (roleInput.getSelectedItem().toString().toLowerCase().equals("manger")) {
@@ -362,13 +367,17 @@ public class Frontend {
                         // Manager cannot delete owner
                         if (isManager) {
                             if (!system.getRole(userRemove.getText()).toLowerCase().equals("owner")){
-                                system.removeUser(userRemove.getText());
+                                system.removeUser(userRemove.getText(), currentUser, userRemove.getText());
                                 JOptionPane.showMessageDialog(null, "User successfully deleted");
+                                system.loadLog(logs);
+                                logmodel.fireTableDataChanged();
                             }
                         // Owner can delete anyone (even himself to reset login)
                         } else {
-                            system.removeUser(userRemove.getText());
+                            system.removeUser(userRemove.getText(), currentUser, userRemove.getText());
                             JOptionPane.showMessageDialog(null, "User successfully deleted");
+                            system.loadLog(logs);
+                            logmodel.fireTableDataChanged();
                         }
                     }
                 });
@@ -385,11 +394,6 @@ public class Frontend {
                 addButt.addActionListener(e -> {
                     JPanel addPane = new JPanel();
                     addPane.setLayout(new BoxLayout(addPane, BoxLayout.Y_AXIS));
-
-                    JPanel idAdd = new JPanel();
-                    idAdd.add(new JLabel("ID: "));
-                    JTextField idProduct = new JTextField(15);
-                    idAdd.add(idProduct);
 
                     JPanel nameAdd = new JPanel();
                     nameAdd.add(new JLabel("Product Name: "));
@@ -411,7 +415,6 @@ public class Frontend {
                     JTextField originProduct = new JTextField(15);
                     originAdd.add(originProduct);
 
-                    addPane.add(idAdd);
                     addPane.add(nameAdd);
                     addPane.add(priceAdd);
                     addPane.add(quantAdd);
@@ -428,7 +431,7 @@ public class Frontend {
                     if (addProduct == JOptionPane.OK_OPTION){
                         try {
                             if (Integer.parseInt(quantProduct.getText()) >= 0 && Double.parseDouble(priceProduct.getText()) >= 0){
-                                system.addItem(Integer.parseInt(idProduct.getText()), nameProduct.getText(), Double.parseDouble(priceProduct.getText()), Integer.parseInt(quantProduct.getText()), originProduct.getText());
+                                system.addItem(nameProduct.getText(), Double.parseDouble(priceProduct.getText()), Integer.parseInt(quantProduct.getText()), originProduct.getText(), currentUser);
                                 system.loadInventory(Data);
                                 system.loadLog(logs);
                                 logmodel.fireTableDataChanged();
@@ -452,7 +455,7 @@ public class Frontend {
                         JOptionPane.YES_OPTION
                         );
                         if (result1 == JOptionPane.YES_OPTION){
-                            system.removeItem(Data.get(table.getSelectedRow()).getName());
+                            system.removeItem(Data.get(table.getSelectedRow()).getName(), currentUser);
                             system.loadInventory(Data);
                             system.loadLog(logs);
                             logmodel.fireTableDataChanged();
@@ -474,7 +477,7 @@ public class Frontend {
                             return;
                         }
                         if (Double.parseDouble(newPrice) >= 0.0){
-                            system.updatePrice(Data.get(table.getSelectedRow()).getName(), Double.parseDouble(newPrice));
+                            system.updatePrice(Data.get(table.getSelectedRow()).getName(), Double.parseDouble(newPrice), currentUser);
                             system.loadInventory(Data);
                             system.loadLog(logs);
                             logmodel.fireTableDataChanged();
@@ -498,7 +501,7 @@ public class Frontend {
                             return;
                         }
                         if (Integer.parseInt(newQuant) >= 0){
-                            system.updateQuantity(Data.get(table.getSelectedRow()).getName(), Integer.parseInt(newQuant));
+                            system.updateQuantity(Data.get(table.getSelectedRow()).getName(), Integer.parseInt(newQuant), currentUser);
                             system.loadInventory(Data);
                             system.loadLog(logs);
                             logmodel.fireTableDataChanged();
